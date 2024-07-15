@@ -3,7 +3,6 @@
 Console module to create a command interpreter for the AirBnB clone
 """
 import cmd
-import shlex  # For splitting the command line into arguments
 from models import storage
 from models.base_model import BaseModel
 from models.user import User
@@ -32,135 +31,129 @@ class HBNBCommand(cmd.Cmd):
 
     def do_create(self, arg):
         """Creates a new instance of a class, saves it, and prints the id"""
-        args = shlex.split(arg)
-        if len(args) == 0:
+        if not arg:
             print("** class name missing **")
             return
 
-        class_name = args[0]
-        if class_name not in ["BaseModel", "User"]:
+        if arg not in storage.classes:
             print("** class doesn't exist **")
             return
 
-        new_instance = eval(f"{class_name}()")
-        new_instance.save()
-        print(new_instance.id)
+        cls = storage.classes[arg]
+        instance = cls()
+        instance.save()
+        print(instance.id)
 
     def do_show(self, arg):
         """Prints the string representation of an instance based on the class name and id"""
-        args = shlex.split(arg)
+        args = arg.split()
         if len(args) == 0:
             print("** class name missing **")
             return
 
-        class_name = args[0]
-        if class_name not in ["BaseModel", "User"]:
+        if args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
-        if len(args) < 2:
+        if len(args) == 1:
             print("** instance id missing **")
             return
 
         instance_id = args[1]
-        key = f"{class_name}.{instance_id}"
-        all_objs = storage.all()
-        if key in all_objs:
-            print(all_objs[key])
-        else:
+        key = f"{args[0]}.{instance_id}"
+        obj = storage.all().get(key)
+        if obj is None:
             print("** no instance found **")
+        else:
+            print(obj)
 
     def do_destroy(self, arg):
         """Deletes an instance based on the class name and id"""
-        args = shlex.split(arg)
+        args = arg.split()
         if len(args) == 0:
             print("** class name missing **")
             return
 
-        class_name = args[0]
-        if class_name not in ["BaseModel", "User"]:
+        if args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
-        if len(args) < 2:
+        if len(args) == 1:
             print("** instance id missing **")
             return
 
         instance_id = args[1]
-        key = f"{class_name}.{instance_id}"
-        all_objs = storage.all()
-        if key in all_objs:
-            del all_objs[key]
+        key = f"{args[0]}.{instance_id}"
+        if key in storage.all():
+            del storage.all()[key]
             storage.save()
         else:
             print("** no instance found **")
 
     def do_all(self, arg):
         """Prints all string representation of all instances based or not on the class name"""
-        args = shlex.split(arg)
-        all_objs = storage.all()
-        if len(args) == 0:
-            print([str(all_objs[obj]) for obj in all_objs])
+        args = arg.split()
+        if len(args) > 1:
+            print("** class name missing **")
             return
 
-        class_name = args[0]
-        if class_name not in ["BaseModel", "User"]:
+        if len(args) == 1 and args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
-        print([str(all_objs[obj]) for obj in all_objs if obj.startswith(class_name)])
+        objs = []
+        if len(args) == 0:
+            objs = storage.all().values()
+        else:
+            objs = [obj for key, obj in storage.all().items() if key.startswith(args[0])]
+
+        print([str(obj) for obj in objs])
 
     def do_update(self, arg):
         """Updates an instance based on the class name and id by adding or updating attribute"""
-        args = shlex.split(arg)
+        args = arg.split()
         if len(args) == 0:
             print("** class name missing **")
             return
 
-        class_name = args[0]
-        if class_name not in ["BaseModel", "User"]:
+        if args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
-        if len(args) < 2:
+        if len(args) == 1:
             print("** instance id missing **")
             return
 
         instance_id = args[1]
-        key = f"{class_name}.{instance_id}"
-        all_objs = storage.all()
-        if key not in all_objs:
+        key = f"{args[0]}.{instance_id}"
+        obj = storage.all().get(key)
+        if obj is None:
             print("** no instance found **")
             return
 
-        if len(args) < 3:
+        if len(args) == 2:
             print("** attribute name missing **")
             return
 
         attribute_name = args[2]
-        if len(args) < 4:
+        if len(args) == 3:
             print("** value missing **")
             return
 
-        attribute_value = args[3]
-        obj = all_objs[key]
+        attribute_value = args[3].strip('"')
         if hasattr(obj, attribute_name):
             attr_type = type(getattr(obj, attribute_name))
-            try:
-                if attr_type is str:
-                    setattr(obj, attribute_name, str(attribute_value))
-                elif attr_type is int:
-                    setattr(obj, attribute_name, int(attribute_value))
-                elif attr_type is float:
-                    setattr(obj, attribute_name, float(attribute_value))
-                else:
-                    print("** unsupported attribute type **")
-                    return
-            except ValueError:
-                print("** invalid value type **")
+            if attr_type is str:
+                setattr(obj, attribute_name, attribute_value)
+            elif attr_type is int:
+                setattr(obj, attribute_name, int(attribute_value))
+            elif attr_type is float:
+                setattr(obj, attribute_name, float(attribute_value))
+            else:
+                print("** unsupported attribute type **")
                 return
         else:
-            print("** attribute doesn't exist **")
+            print("** attribute name missing **")
             return
 
         obj.save()
