@@ -3,10 +3,9 @@
 Console module to create a command interpreter for the AirBnB clone
 """
 import cmd
-import sys
-import models
-from models.base_model import BaseModel
 from models import storage
+from models.base_model import BaseModel
+from models.user import User
 
 class HBNBCommand(cmd.Cmd):
     """Command interpreter for the AirBnB clone"""
@@ -31,16 +30,16 @@ class HBNBCommand(cmd.Cmd):
         pass
 
     def do_create(self, arg):
-        """Creates a new instance of BaseModel, saves it and prints the id"""
+        """Creates a new instance of a class, saves it, and prints the id"""
         if not arg:
             print("** class name missing **")
             return
 
-        if arg not in models.classes.keys():
+        if arg not in storage.classes:
             print("** class doesn't exist **")
             return
 
-        cls = models.classes[arg]
+        cls = storage.classes[arg]
         instance = cls()
         instance.save()
         print(instance.id)
@@ -52,7 +51,7 @@ class HBNBCommand(cmd.Cmd):
             print("** class name missing **")
             return
 
-        if args[0] not in models.classes.keys():
+        if args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
@@ -75,7 +74,7 @@ class HBNBCommand(cmd.Cmd):
             print("** class name missing **")
             return
 
-        if args[0] not in models.classes.keys():
+        if args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
@@ -98,7 +97,7 @@ class HBNBCommand(cmd.Cmd):
             print("** class name missing **")
             return
 
-        if len(args) == 1 and args[0] not in models.classes.keys():
+        if len(args) == 1 and args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
@@ -116,7 +115,7 @@ class HBNBCommand(cmd.Cmd):
             print("** class name missing **")
             return
 
-        if args[0] not in models.classes.keys():
+        if args[0] not in storage.classes:
             print("** class doesn't exist **")
             return
 
