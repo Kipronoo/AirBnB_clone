@@ -1,43 +1,43 @@
 #!/usr/bin/python3
 """
-FileStorage module for serializing and deserializing BaseModel instances
+FileStorage class to handle serialization and deserialization
 """
 import json
-import os
 from models.base_model import BaseModel
-
+from models.user import User
 
 class FileStorage:
-    """Class that serializes and deserializes instances to and from a JSON file"""
+    """FileStorage class"""
 
     __file_path = 'file.json'
     __objects = {}
 
     def all(self):
-        """Returns the dictionary __objects"""
-        return FileStorage.__objects
+        """Returns the dictionary of objects"""
+        return self.__objects
 
     def new(self, obj):
-        """Sets in __objects the obj with key <obj class name>.id"""
-        if obj:
-            key = f"{obj.__class__.__name__}.{obj.id}"
-            FileStorage.__objects[key] = obj
+        """Adds a new object to the storage"""
+        key = f"{obj.__class__.__name__}.{obj.id}"
+        self.__objects[key] = obj
 
     def save(self):
-        """Serializes __objects to the JSON file"""
-        with open(FileStorage.__file_path, 'w') as file:
-            json.dump(
-                {key: obj.to_dict() for key, obj in FileStorage.__objects.items()},
-                file
-            )
+        """Saves the objects to a JSON file"""
+        with open(self.__file_path, 'w') as f:
+            json.dump({k: v.to_dict() for k, v in self.__objects.items()}, f)
 
     def reload(self):
-        """Deserializes the JSON file to __objects"""
-        if os.path.exists(FileStorage.__file_path):
-            with open(FileStorage.__file_path, 'r') as file:
-                objects = json.load(file)
-                for key, obj in objects.items():
-                    cls_name = key.split('.')[0]
+        """Reloads objects from the JSON file"""
+        try:
+            with open(self.__file_path, 'r') as f:
+                data = json.load(f)
+                for key, value in data.items():
+                    cls_name = value['__class__']
                     if cls_name == 'BaseModel':
-                        obj_instance = BaseModel(**obj)
-                        FileStorage.__objects[key] = obj_instance
+                        obj = BaseModel(**value)
+                    elif cls_name == 'User':
+                        obj = User(**value)
+                    # Add more elif blocks here for other classes
+                    self.__objects[key] = obj
+        except FileNotFoundError:
+            pass
