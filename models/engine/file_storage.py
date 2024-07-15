@@ -5,6 +5,11 @@ FileStorage class to handle serialization and deserialization
 import json
 from models.base_model import BaseModel
 from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 
 class FileStorage:
     """FileStorage class"""
@@ -37,7 +42,18 @@ class FileStorage:
                         obj = BaseModel(**value)
                     elif cls_name == 'User':
                         obj = User(**value)
-                    # Add more elif blocks here for other classes
+                    elif cls_name == 'State':
+                        obj = State(**value)
+                    elif cls_name == 'City':
+                        obj = City(**value)
+                    elif cls_name == 'Amenity':
+                        obj = Amenity(**value)
+                    elif cls_name == 'Place':
+                        obj = Place(**value)
+                    elif cls_name == 'Review':
+                        obj = Review(**value)
+                    else:
+                        continue
                     self.__objects[key] = obj
         except FileNotFoundError:
             pass
