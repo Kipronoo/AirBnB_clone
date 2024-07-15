@@ -1,61 +1,43 @@
 #!/usr/bin/python3
 """
-Unittests for FileStorage class
+FileStorage module for serializing and deserializing BaseModel instances
 """
-import unittest
+import json
 import os
 from models.base_model import BaseModel
-from models.engine.file_storage import FileStorage
 
 
-class TestFileStorage(unittest.TestCase):
-    """Test cases for the FileStorage class"""
+class FileStorage:
+    """Class that serializes and deserializes instances to and from a JSON file"""
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up for the tests"""
-        cls.storage = FileStorage()
-        cls.file_path = 'file.json'
+    __file_path = 'file.json'
+    __objects = {}
 
-    def setUp(self):
-        """Reset the storage and file before each test"""
-        self.storage.reload()
-        if os.path.exists(self.file_path):
-            os.remove(self.file_path)
+    def all(self):
+        """Returns the dictionary __objects"""
+        return FileStorage.__objects
 
-    def test_all(self):
-        """Test all method"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        self.assertIn(f"BaseModel.{obj.id}", self.storage.all())
+    def new(self, obj):
+        """Sets in __objects the obj with key <obj class name>.id"""
+        if obj:
+            key = f"{obj.__class__.__name__}.{obj.id}"
+            FileStorage.__objects[key] = obj
 
-    def test_new(self):
-        """Test new method"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        self.assertIn(f"BaseModel.{obj.id}", self.storage.all())
+    def save(self):
+        """Serializes __objects to the JSON file"""
+        with open(FileStorage.__file_path, 'w') as file:
+            json.dump(
+                {key: obj.to_dict() for key, obj in FileStorage.__objects.items()},
+                file
+            )
 
-    def test_save(self):
-        """Test save method"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        self.storage.save()
-        self.assertTrue(os.path.exists(self.file_path))
-
-    def test_reload(self):
-        """Test reload method"""
-        obj = BaseModel()
-        self.storage.new(obj)
-        self.storage.save()
-        self.storage.reload()
-        self.assertIn(f"BaseModel.{obj.id}", self.storage.all())
-
-    def test_reload_empty_file(self):
-        """Test reload method with empty file"""
-        open(self.file_path, 'w').close()
-        self.storage.reload()
-        self.assertEqual(self.storage.all(), {})
-
-
-if __name__ == '__main__':
-    unittest.main()
+    def reload(self):
+        """Deserializes the JSON file to __objects"""
+        if os.path.exists(FileStorage.__file_path):
+            with open(FileStorage.__file_path, 'r') as file:
+                objects = json.load(file)
+                for key, obj in objects.items():
+                    cls_name = key.split('.')[0]
+                    if cls_name == 'BaseModel':
+                        obj_instance = BaseModel(**obj)
+                        FileStorage.__objects[key] = obj_instance
