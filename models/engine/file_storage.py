@@ -2,6 +2,11 @@
 import json
 from models.base_model import BaseModel
 from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
 
 class FileStorage:
     __file_path = "file.json"
@@ -24,9 +29,7 @@ class FileStorage:
                 obj_dict = json.load(f)
             for key, value in obj_dict.items():
                 cls_name = value['__class__']
-                if cls_name == "User":
-                    self.__objects[key] = User(**value)
-                else:
-                    self.__objects[key] = BaseModel(**value)
+                cls = globals()[cls_name]
+                self.__objects[key] = cls(**value)
         except FileNotFoundError:
             pass
